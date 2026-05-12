@@ -2,7 +2,15 @@
 
 KeePass plugin that acts as an LDAP server. Exposes entries from an unlocked KeePass database over the LDAP protocol.
 
+Only entries with `mailto:` or `tel:` URLs are exposed (treating KeePass as an address book).
+
 ## Build
+
+```sh
+make
+```
+
+Auto-downloads KeePass 2.61.1. To use an existing KeePass.exe:
 
 ```sh
 KeePassPath=/path/to/KeePass.exe make
@@ -17,11 +25,11 @@ Copy `bin/Release/LDAPass.dll` into your KeePass `Plugins` directory.
 ## Usage
 
 1. Open a KeePass database
-2. Tools → Start LDAP Server (enter port, default 3389)
+2. Tools → Start LDAP Server... (enter port, default 389)
 3. Query with any LDAP client:
 
 ```sh
-ldapsearch -H ldap://localhost:3389 -b "dc=keepass,dc=local" "(cn=*)"
+ldapsearch -H ldap://localhost:389 -b "dc=keepass,dc=local" "(cn=*)"
 ```
 
 ## Entry mapping
