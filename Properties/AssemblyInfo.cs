@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("LDAPass")]
-[assembly: AssemblyDescription("KeePass LDAP server plugin")]
+[assembly: AssemblyDescription("KeePass plugin that acts as an LDAP server.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("LDAPass")]
