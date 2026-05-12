@@ -26,7 +26,7 @@ namespace LDAPass
             if (t != PluginMenuType.Main) return null;
             _menuItem = new ToolStripMenuItem
             {
-                Text = "Start LDAP Server",
+                Text = "Start LDAP Server...",
                 ToolTipText = "LDAPass - Expose KeePass entries over LDAP"
             };
             _menuItem.Click += OnMenuClick;
@@ -38,7 +38,7 @@ namespace LDAPass
             if (_server != null && _server.Running)
             {
                 _server.Stop();
-                _menuItem.Text = "Start LDAP Server";
+                _menuItem.Text = "Start LDAP Server...";
                 ShowNotification("LDAPass server stopped");
             }
             else
@@ -51,7 +51,7 @@ namespace LDAPass
                     return;
                 }
 
-                int port = 3389;
+                int port = 389;
                 using (var dialog = new PortInputDialog(port))
                 {
                     if (dialog.ShowDialog() != DialogResult.OK)
