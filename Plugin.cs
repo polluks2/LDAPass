@@ -121,12 +121,17 @@ namespace LDAPass
         {
             if (entry == null) return null;
 
+            var url = ReadSafe(entry, PwDefs.UrlField);
+            if (url.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("tel:", StringComparison.OrdinalIgnoreCase))
+                return null;
+
             var result = new KeePassEntry
             {
                 Title = ReadSafe(entry, PwDefs.TitleField),
                 UserName = ReadSafe(entry, PwDefs.UserNameField),
                 Password = ReadSafe(entry, PwDefs.PasswordField),
-                Url = ReadSafe(entry, PwDefs.UrlField),
+                Url = url,
                 Notes = ReadSafe(entry, PwDefs.NotesField),
                 Group = parentGroup?.Name ?? ""
             };
