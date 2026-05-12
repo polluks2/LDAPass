@@ -1,4 +1,4 @@
-KeePassUrl := https://sourceforge.net/projects/keepass/files/KeePass%202.x/2.61/KeePass-2.61.zip/download
+KeePassUrl := https://sourceforge.net/projects/keepass/files/KeePass%202.x/2.61.1/KeePass-2.61.1.zip/download
 KeePassZip := /tmp/keepass-dl/keepass.zip
 KeePassDir := /tmp/keepass-dl/extracted
 
