@@ -13,7 +13,7 @@ namespace LDAPass
         private LdapServer _server;
         private ToolStripMenuItem _menuItem;
         private KeePassDb _db;
-
+        private string _originalTitle;
         public override bool Initialize(IPluginHost host)
         {
             _host = host ?? throw new ArgumentNullException(nameof(host));
@@ -39,7 +39,7 @@ namespace LDAPass
             {
                 _server.Stop();
                 _menuItem.Text = "Start LDAP Server...";
-                ShowNotification("LDAPass server stopped");
+                RestoreTitle();
             }
             else
             {
@@ -63,8 +63,9 @@ namespace LDAPass
                 {
                     _server = new LdapServer(port, _db);
                     _server.Start();
-                    _menuItem.Text = "Stop LDAP Server";
-                    ShowNotification($"LDAPass server running on port {port}");
+                    _menuItem.Text = $"Stop LDAP Server ({port})";
+                    _originalTitle = _host.MainWindow.Text;
+                    _host.MainWindow.Text = _originalTitle + " (LDAP)";
                 }
                 catch (Exception ex)
                 {
@@ -80,11 +81,11 @@ namespace LDAPass
                 _server.Stop();
         }
 
-        private void ShowNotification(string text)
+        private void RestoreTitle()
         {
             try
             {
-                _host.MainWindow.Text = "LDAPass: " + text;
+                _host.MainWindow.Text = _originalTitle ?? "KeePass";
             }
             catch { }
         }
