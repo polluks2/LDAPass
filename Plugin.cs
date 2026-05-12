@@ -122,8 +122,8 @@ namespace LDAPass
             if (entry == null) return null;
 
             var url = ReadSafe(entry, PwDefs.UrlField);
-            if (url.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) ||
-                url.StartsWith("tel:", StringComparison.OrdinalIgnoreCase))
+            if (!url.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) &&
+                !url.StartsWith("tel:", StringComparison.OrdinalIgnoreCase))
                 return null;
 
             var result = new KeePassEntry
