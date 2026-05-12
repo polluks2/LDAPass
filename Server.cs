@@ -65,7 +65,7 @@ namespace LDAPass
                 catch (ObjectDisposedException) { break; }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("LDAPass accept error: " + ex.Message);
+                    Console.Error.WriteLine("LDAPass accept error: " + ex.Message);
                 }
             }
         }
@@ -135,7 +135,7 @@ namespace LDAPass
                             case BerTag.UnbindRequest:
                                 return;
                             default:
-                                System.Diagnostics.Debug.WriteLine($"LDAPass: unknown op 0x{protocolOp:X2}");
+                                Console.Error.WriteLine($"LDAPass: unknown op 0x{protocolOp:X2}");
                                 return;
                         }
                     }
@@ -143,7 +143,7 @@ namespace LDAPass
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("LDAPass session: " + ex.Message);
+                Console.Error.WriteLine("LDAPass session: " + ex.Message);
             }
             finally
             {
@@ -279,7 +279,7 @@ namespace LDAPass
             int timeLimit = reader.ReadInteger();
             bool typesOnly = reader.ReadBoolean();
 
-            System.Diagnostics.Debug.WriteLine(
+            Console.Error.WriteLine(
                 $"LDAPass search: base='{baseDn}' scope={scope} deref={deref} sizeLimit={sizeLimit} timeLimit={timeLimit} typesOnly={typesOnly}");
 
             byte filterTag = reader.ReadTag();
@@ -297,9 +297,18 @@ namespace LDAPass
             reader.ReadLength();      // filter length
 
             var requestedAttrs = new List<string>();
-            while (reader.Position < content.Length)
+            if (reader.Position < content.Length)
             {
-                requestedAttrs.Add(reader.ReadOctetString());
+                byte attrSeqTag = reader.ReadTag();
+                if (attrSeqTag == BerTag.Sequence)
+                {
+                    int attrSeqLen = reader.ReadLength();
+                    int end = reader.Position + attrSeqLen;
+                    while (reader.Position < end)
+                    {
+                        requestedAttrs.Add(reader.ReadOctetString());
+                    }
+                }
             }
 
             var entries = _db.GetEntries();
@@ -326,9 +335,8 @@ namespace LDAPass
             {
                 case BerTag.FilterPresent:
                 {
-                    var reader = new BerReader(content);
-                    string attr = reader.ReadOctetString();
-                    consumed = reader.Position;
+                    string attr = Encoding.UTF8.GetString(content);
+                    consumed = content.Length;
                     return AttributeExists(entry, attr);
                 }
                 case BerTag.FilterEqualityMatch:

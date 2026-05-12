@@ -92,10 +92,12 @@ namespace LDAPass
         public void WriteInteger(int value)
         {
             _buf.WriteByte(BerTag.Integer);
-            WriteLength(WriteIntegerRaw(value));
+            var raw = GetIntegerBytes(value);
+            WriteLength(raw.Length);
+            _buf.Write(raw, 0, raw.Length);
         }
 
-        private int WriteIntegerRaw(int value)
+        private byte[] GetIntegerBytes(int value)
         {
             long v = value;
             byte[] all8 = new byte[8];
@@ -120,9 +122,10 @@ namespace LDAPass
                     start++;
             }
 
+            var result = new byte[8 - start];
             for (int i = start; i < 8; i++)
-                _buf.WriteByte(all8[i]);
-            return 8 - start;
+                result[i - start] = all8[i];
+            return result;
         }
 
         public void WriteOctetString(string s)
@@ -143,7 +146,9 @@ namespace LDAPass
         public void WriteEnumerated(int value)
         {
             _buf.WriteByte(BerTag.Enumerated);
-            WriteLength(WriteIntegerRaw(value));
+            var raw = GetIntegerBytes(value);
+            WriteLength(raw.Length);
+            _buf.Write(raw, 0, raw.Length);
         }
 
         public void WriteBoolean(bool value)
@@ -258,7 +263,7 @@ namespace LDAPass
         {
             byte tag = ReadTag();
             if (tag != BerTag.OctetString)
-                throw new InvalidDataException($"Expected OCTET STRING tag 0x04, got 0x{tag:X2}");
+                throw new InvalidDataException($"Expected OCTET STRING tag 0x04, got 0x{tag:X2} at pos {Position - 1}");
             int len = ReadLength();
             if (_pos + len > _data.Length)
                 throw new EndOfStreamException();

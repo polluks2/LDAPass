@@ -3,3 +3,6 @@ obj/
 *.suo
 *.user
 *.cache
+test/*.exe
+release/
+LDAPass.zip

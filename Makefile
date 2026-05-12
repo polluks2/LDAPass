@@ -8,16 +8,20 @@ LDAPass.dll: BerCodec.cs Plugin.cs Server.cs LDAPass.csproj
 	$(MAKE) check-dep
 	msbuild LDAPass.csproj /p:Configuration=Release /p:KeePassPath="$(call get-kp)"
 
-check: LDAPass.dll
+check: LDAPass.dll test/TestRunner.exe
 	@echo "Checking plugin assembly..."
 	monodis --typedef bin/Release/LDAPass.dll | grep -q "LDAPass.LDAPassExt" && echo "  [ok] LDAPassExt class found"
 	monodis --typedef bin/Release/LDAPass.dll | grep -q "LDAPass.LdapServer" && echo "  [ok] LdapServer class found"
 	monodis --typedef bin/Release/LDAPass.dll | grep -q "LDAPass.BerWriter" && echo "  [ok] BerWriter class found"
 	monodis --typedef bin/Release/LDAPass.dll | grep -q "LDAPass.BerReader" && echo "  [ok] BerReader class found"
-	@echo "All checks passed."
+	@echo "Running integration tests..."
+	mono test/TestRunner.exe
+
+test/TestRunner.exe: BerCodec.cs Server.cs test/TestRunner.cs
+	csc -out:test/TestRunner.exe -nologo -reference:System.dll -reference:System.Core.dll BerCodec.cs Server.cs test/TestRunner.cs
 
 clean:
-	rm -rf bin/ obj/
+	rm -rf bin/ obj/ test/TestRunner.exe
 
 distclean: clean
 	rm -rf /tmp/keepass-dl
