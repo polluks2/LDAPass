@@ -415,7 +415,10 @@ namespace LDAPass
             if (attr.Equals("cn", StringComparison.OrdinalIgnoreCase)) return true;
             if (attr.Equals("sn", StringComparison.OrdinalIgnoreCase)) return !string.IsNullOrEmpty(entry.Title);
             if (attr.Equals("uid", StringComparison.OrdinalIgnoreCase)) return !string.IsNullOrEmpty(entry.UserName);
-            if (attr.Equals("mail", StringComparison.OrdinalIgnoreCase)) return false;
+            if (attr.Equals("mail", StringComparison.OrdinalIgnoreCase))
+                return entry.Url.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase);
+            if (attr.Equals("telephoneNumber", StringComparison.OrdinalIgnoreCase))
+                return entry.Url.StartsWith("tel:", StringComparison.OrdinalIgnoreCase);
             if (attr.Equals("userPassword", StringComparison.OrdinalIgnoreCase)) return !string.IsNullOrEmpty(entry.Password);
             if (attr.Equals("description", StringComparison.OrdinalIgnoreCase)) return !string.IsNullOrEmpty(entry.Notes);
             if (attr.Equals("url", StringComparison.OrdinalIgnoreCase)) return !string.IsNullOrEmpty(entry.Url);
@@ -440,6 +443,16 @@ namespace LDAPass
                 return string.Equals(entry.UserName, val, StringComparison.OrdinalIgnoreCase);
             if (attr.Equals("userPassword", StringComparison.OrdinalIgnoreCase))
                 return string.Equals(entry.Password, val, StringComparison.OrdinalIgnoreCase);
+            if (attr.Equals("mail", StringComparison.OrdinalIgnoreCase))
+            {
+                var mail = StripPrefix(entry.Url, "mailto:");
+                return mail != null && string.Equals(mail, val, StringComparison.OrdinalIgnoreCase);
+            }
+            if (attr.Equals("telephoneNumber", StringComparison.OrdinalIgnoreCase))
+            {
+                var tel = StripPrefix(entry.Url, "tel:");
+                return tel != null && string.Equals(tel, val, StringComparison.OrdinalIgnoreCase);
+            }
             if (attr.Equals("description", StringComparison.OrdinalIgnoreCase))
                 return entry.Notes != null && entry.Notes.IndexOf(val, StringComparison.OrdinalIgnoreCase) >= 0;
             if (attr.Equals("url", StringComparison.OrdinalIgnoreCase))
@@ -539,6 +552,12 @@ namespace LDAPass
             AddAttr("description", entry.Notes);
             AddAttr("url", entry.Url);
 
+            var mail = StripPrefix(entry.Url, "mailto:");
+            if (mail != null) AddAttr("mail", mail);
+
+            var tel = StripPrefix(entry.Url, "tel:");
+            if (tel != null) AddAttr("telephoneNumber", tel);
+
             if (!string.IsNullOrEmpty(entry.Group))
             {
                 AddAttr("ou", entry.Group);
@@ -602,6 +621,14 @@ namespace LDAPass
                 return $"\\{value}";
             }
             return value;
+        }
+
+        private static string StripPrefix(string url, string prefix)
+        {
+            if (string.IsNullOrEmpty(url)) return null;
+            if (url.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return url.Substring(prefix.Length);
+            return null;
         }
     }
 
