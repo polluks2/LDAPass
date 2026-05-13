@@ -347,6 +347,49 @@ namespace LDAPass
                     consumed = reader.Position;
                     return AttributeMatches(entry, attr, val);
                 }
+                case BerTag.FilterSubstrings:
+                {
+                    var reader = new BerReader(content);
+                    string attr = reader.ReadOctetString();
+                    byte seqTag = reader.ReadTag();
+                    int seqLen = reader.ReadLength();
+                    int subEnd = reader.Position + seqLen;
+                    string initial = null, final = null;
+                    var any = new List<string>();
+                    while (reader.Position < subEnd)
+                    {
+                        byte subTag = reader.ReadTag();
+                        int subLen = reader.ReadLength();
+                        var subVal = Encoding.UTF8.GetString(content, reader.Position, subLen);
+                        reader.Position += subLen;
+                        if (subTag == 0x80) initial = subVal;
+                        else if (subTag == 0x81) any.Add(subVal);
+                        else if (subTag == 0x82) final = subVal;
+                    }
+                    consumed = reader.Position;
+                    var field = GetFieldValue(entry, attr);
+                    if (field == null) return false;
+                    if (initial != null && !field.StartsWith(initial, StringComparison.OrdinalIgnoreCase))
+                        return false;
+                    if (final != null && !field.EndsWith(final, StringComparison.OrdinalIgnoreCase))
+                        return false;
+                    int pos = initial?.Length ?? 0;
+                    foreach (var part in any)
+                    {
+                        int idx = field.IndexOf(part, pos, StringComparison.OrdinalIgnoreCase);
+                        if (idx < 0) return false;
+                        pos = idx + part.Length;
+                    }
+                    return true;
+                }
+                case BerTag.FilterApproxMatch:
+                {
+                    var reader = new BerReader(content);
+                    string attr = reader.ReadOctetString();
+                    string val = reader.ReadOctetString();
+                    consumed = reader.Position;
+                    return AttributeMatches(entry, attr, val);
+                }
                 case BerTag.FilterAnd:
                 {
                     var reader = new BerReader(content);
@@ -398,7 +441,7 @@ namespace LDAPass
                 }
                 default:
                     consumed = content.Length;
-                    return true;
+                    return false;
             }
         }
 
@@ -424,6 +467,30 @@ namespace LDAPass
             if (attr.Equals("url", StringComparison.OrdinalIgnoreCase)) return !string.IsNullOrEmpty(entry.Url);
             if (attr.Equals("ou", StringComparison.OrdinalIgnoreCase)) return true;
             return entry.CustomFields.ContainsKey(attr);
+        }
+
+        private string GetFieldValue(KeePassEntry entry, string attr)
+        {
+            if (attr.Equals("cn", StringComparison.OrdinalIgnoreCase) ||
+                attr.Equals("sn", StringComparison.OrdinalIgnoreCase))
+                return entry.Title;
+            if (attr.Equals("uid", StringComparison.OrdinalIgnoreCase))
+                return entry.UserName;
+            if (attr.Equals("userPassword", StringComparison.OrdinalIgnoreCase))
+                return entry.Password;
+            if (attr.Equals("description", StringComparison.OrdinalIgnoreCase))
+                return entry.Notes;
+            if (attr.Equals("url", StringComparison.OrdinalIgnoreCase))
+                return entry.Url;
+            if (attr.Equals("ou", StringComparison.OrdinalIgnoreCase))
+                return entry.Group;
+            if (attr.Equals("mail", StringComparison.OrdinalIgnoreCase))
+                return StripPrefix(entry.Url, "mailto:");
+            if (attr.Equals("telephoneNumber", StringComparison.OrdinalIgnoreCase))
+                return StripPrefix(entry.Url, "tel:");
+            if (entry.CustomFields.TryGetValue(attr, out string cv))
+                return cv;
+            return null;
         }
 
         private bool AttributeMatches(KeePassEntry entry, string attr, string val)
